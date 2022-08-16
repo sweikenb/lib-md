@@ -28,7 +28,7 @@ class PandocMarkdownParser implements MarkdownParserInterface
     public function parseToAtomicHtml(string $markdown): string
     {
         $cmd = sprintf(
-            '%s -f markdown -t html --strip-empty-paragraphs --strip-comments --preserve-tabs',
+            '%s -f markdown -t html --strip-empty-paragraphs --strip-comments --preserve-tabs --no-highlight',
             $this->pandocBin
         );
 
