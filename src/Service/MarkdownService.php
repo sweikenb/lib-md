@@ -2,11 +2,12 @@
 
 namespace Sweikenb\Library\Markdown\Service;
 
-use ParsedownExtra;
+use Sweikenb\Library\Markdown\Api\MarkdownParserInterface;
+use Sweikenb\Library\Markdown\Model\AutoSelectMarkdownParser;
 
 class MarkdownService
 {
-    private ParsedownExtra $parsedown;
+    private MarkdownParserInterface $markdownParser;
 
     /**
      * @var array<int, string>
@@ -16,9 +17,9 @@ class MarkdownService
     /**
      * @param array<int, string> $mdFileExt
      */
-    public function __construct(array $mdFileExt = ['md', 'markdown'])
+    public function __construct(?MarkdownParserInterface $markdownParser = null, array $mdFileExt = ['md', 'markdown'])
     {
-        $this->parsedown = new ParsedownExtra();
+        $this->markdownParser = $markdownParser ?? new AutoSelectMarkdownParser();
         $this->mdFileExt = $mdFileExt;
     }
 
@@ -32,7 +33,7 @@ class MarkdownService
 
     public function toHtml(string $markdown): string
     {
-        return $this->parsedown->text($markdown);
+        return $this->markdownParser->parseToAtomicHtml($markdown);
     }
 
     public function isMarkdownFile(string $filename): bool

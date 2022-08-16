@@ -2,8 +2,10 @@
 
 namespace Tests\Service;
 
-use ParsedownExtra;
 use PHPUnit\Framework\TestCase;
+use Sweikenb\Library\Markdown\Exceptions\MarkdownParserException;
+use Sweikenb\Library\Markdown\Model\PandocMarkdownParser;
+use Sweikenb\Library\Markdown\Model\ParsedownMarkdownParser;
 use Sweikenb\Library\Markdown\Service\MarkdownService;
 
 class MarkdownServiceTest extends TestCase
@@ -17,14 +19,42 @@ MD;
     /**
      * @covers \Sweikenb\Library\Markdown\Service\MarkdownService::__construct
      * @covers \Sweikenb\Library\Markdown\Service\MarkdownService::toHtml
+     * @covers \Sweikenb\Library\Markdown\Model\AutoSelectMarkdownParser::__construct
+     * @covers \Sweikenb\Library\Markdown\Model\AutoSelectMarkdownParser::parseToAtomicHtml
+     * @covers \Sweikenb\Library\Markdown\Model\ParsedownMarkdownParser::__construct
+     * @covers \Sweikenb\Library\Markdown\Model\ParsedownMarkdownParser::parseToAtomicHtml
      */
-    public function testToHtml(): void
+    public function testParsedownToHtml(): void
     {
-        $parsedown = new ParsedownExtra();
-        $service = new MarkdownService();
+        $service = new MarkdownService(new ParsedownMarkdownParser());
+        $this->assertSame(
+            <<<PANDOC_HTML
+<h1>Hello World</h1>
+<p>Lorem <strong>Ipsum</strong>.</p>
+PANDOC_HTML,
+            $service->toHtml(self::MARKDOWN)
+        );
+    }
+
+    /**
+     * @covers \Sweikenb\Library\Markdown\Service\MarkdownService::__construct
+     * @covers \Sweikenb\Library\Markdown\Service\MarkdownService::toHtml
+     * @covers \Sweikenb\Library\Markdown\Model\AutoSelectMarkdownParser::__construct
+     * @covers \Sweikenb\Library\Markdown\Model\AutoSelectMarkdownParser::parseToAtomicHtml
+     * @covers \Sweikenb\Library\Markdown\Model\PandocMarkdownParser::__construct
+     * @covers \Sweikenb\Library\Markdown\Model\PandocMarkdownParser::parseToAtomicHtml
+     * @throws MarkdownParserException
+     */
+    public function testPandocToHtml(): void
+    {
+        $pandocBin = trim(shell_exec('which pandoc'));
+        $service = new MarkdownService(new PandocMarkdownParser($pandocBin));
 
         $this->assertSame(
-            $parsedown->text(self::MARKDOWN),
+            <<<PANDOC_HTML
+<h1 id="hello-world">Hello World</h1>
+<p>Lorem <strong>Ipsum</strong>.</p>
+PANDOC_HTML,
             $service->toHtml(self::MARKDOWN)
         );
     }
@@ -58,11 +88,14 @@ MD;
      * @covers       \Sweikenb\Library\Markdown\Service\MarkdownService::__construct
      * @covers       \Sweikenb\Library\Markdown\Service\MarkdownService::isMarkdownFile
      * @covers       \Sweikenb\Library\Markdown\Service\MarkdownService::getFileExtensions
+     * @covers       \Sweikenb\Library\Markdown\Model\AutoSelectMarkdownParser::__construct
+     * @covers       \Sweikenb\Library\Markdown\Model\AutoSelectMarkdownParser::parseToAtomicHtml
+     * @covers       \Sweikenb\Library\Markdown\Model\PandocMarkdownParser::__construct
      * @dataProvider filenamesProvider
      */
     public function testIsMarkdownFile(array $fileExt, string $filename, bool $expected): void
     {
-        $service = new MarkdownService($fileExt);
+        $service = new MarkdownService(null, $fileExt);
         $this->assertSame($fileExt, $service->getFileExtensions());
         $this->assertSame($expected, $service->isMarkdownFile($filename));
     }
